@@ -20,9 +20,4 @@
         android:text="info"
         android:textAlignment="center"
         android:textColor="#ff00" />
-
-    <com.anton111111.ray_picking.DrawView
-        android:id="@+id/drawView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
 </RelativeLayout>

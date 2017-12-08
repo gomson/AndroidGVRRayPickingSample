@@ -54,6 +54,13 @@ public class MainActivity extends GvrActivity
             1.0f, 1.0f, 1.0f, 1.0f,
     };
 
+    private static final String name_of_colors[] = {
+            "red",
+            "green",
+            "blue",
+            "white",
+    };
+
     private float[] viewMatrix = new float[16];
     private float[] eulerAngles = new float[3];
     private float[] modelViewProjection = new float[16];
@@ -132,7 +139,8 @@ public class MainActivity extends GvrActivity
                 if (rayPicking(viewWidth, viewHeight, cursorX, cursorY,
                         viewMatrix, perspectiveMatrix, modelViewMatrix,
                         object, vertexIndexes)) {
-                    picked = " " + objects.indexOf(object);
+                    picked += (picked.length() > 0) ? "," : "";
+                    picked += " " + name_of_colors[objects.indexOf(object)];
                 }
             }
             runOnUiThread(new Runnable() {
