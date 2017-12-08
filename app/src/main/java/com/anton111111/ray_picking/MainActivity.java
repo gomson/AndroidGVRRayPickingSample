@@ -26,6 +26,7 @@ public class MainActivity extends GvrActivity
 
     public static final float Z_NEAR = 0.1f;
     public static final float Z_FAR = 100.0f;
+    public static final float CURSOR_Z = -0.5f;
 
 
     private final String vertexShaderCode =
@@ -71,6 +72,8 @@ public class MainActivity extends GvrActivity
     private TextView infoBoxView;
     private String picked;
     private float[] cursorCoords;
+    private float cursorX = -1;
+    private float cursorY = -1;
 
 
     @Override
@@ -123,10 +126,10 @@ public class MainActivity extends GvrActivity
 
         renderCursor(eye);
 
-        if (eye.getType() <= 1) {
+        if (eye.getType() <= 1 && cursorX >= 0 && cursorY >= 0) {
             picked = "";
             for (float[] object : objects) {
-                if (rayPicking(viewWidth, viewHeight, viewWidth / 2.0f, viewHeight / 2.0f,
+                if (rayPicking(viewWidth, viewHeight, cursorX, cursorY,
                         viewMatrix, perspectiveMatrix, modelViewMatrix,
                         object, vertexIndexes)) {
                     picked = " " + objects.indexOf(object);
@@ -158,12 +161,12 @@ public class MainActivity extends GvrActivity
 
         float[] perspectiveMatrix = eye.getPerspective(Z_NEAR, Z_FAR);
         float[] orthoViewMatrix = new float[16];
-        float[] modelViewMatrix = new float[16];
+        float[] modelViewProjMatrix = new float[16];
         Matrix.orthoM(orthoViewMatrix, 0, -1, 1, -1, 1, Z_NEAR, Z_FAR);
-        Matrix.multiplyMM(modelViewMatrix, 0, perspectiveMatrix, 0, orthoViewMatrix, 0);
+        Matrix.multiplyMM(modelViewProjMatrix, 0, perspectiveMatrix, 0, orthoViewMatrix, 0);
 
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle,
-                1, false, modelViewMatrix, 0);
+                1, false, modelViewProjMatrix, 0);
 
 
         // Draw the square
@@ -174,6 +177,32 @@ public class MainActivity extends GvrActivity
         GLES20.glDisableVertexAttribArray(mPositionHandle);
         GLES20.glDepthFunc(GLES20.GL_LEQUAL);
         GLES20.glDepthMask(true);
+
+        if (eye.getType() <= 1 &&
+                (cursorX < 0 || cursorY < 0)) {
+            calculateCursorScreenCoords(modelViewProjMatrix);
+        }
+    }
+
+
+    private void calculateCursorScreenCoords(float[] modelViewProjMatrix) {
+        if (!getGvrView().getStereoModeEnabled()) {
+            cursorX = (float) viewWidth / 2.0f;
+            cursorY = (float) viewHeight / 2.0f;
+            return;
+        }
+        float[] coords = new float[]{
+                cursorCoords[0] + (((cursorCoords[3] + 1.0f) - (cursorCoords[0] + 1.0f)) / 2.0f),
+                cursorCoords[1] + (((cursorCoords[4] + 1.0f) - (cursorCoords[1] + 1.0f)) / 2.0f),
+                CURSOR_Z,
+                1.0f
+        };
+        float[] result = new float[16];
+        Matrix.multiplyMV(result, 0, modelViewProjMatrix, 0, coords, 0);
+        float xndc = result[0] / result[3];
+        float yndc = result[1] / result[3];
+        cursorX = (xndc + 1.0f) * ((float) viewWidth / 2.0f);
+        cursorY = (yndc + 1.0f) * ((float) viewHeight / 2.0f);
     }
 
     private void renderObject(float[] modelViewProjection, FloatBuffer vertexCoordsBuf, int i) {
@@ -289,21 +318,6 @@ public class MainActivity extends GvrActivity
     public void onSurfaceChanged(int width, int height) {
         viewWidth = width;
         viewHeight = height;
-
-        DrawView drawView = findViewById(R.id.drawView);
-        if (getGvrView().getStereoModeEnabled()) {
-            ArrayList<float[]> list = new ArrayList<>();
-            list.add(new float[]{
-                    viewWidth * 0.5f, viewHeight * 0.5f,
-            });
-            list.add(new float[]{
-                    viewWidth * 1.5f, viewHeight * 0.5f
-            });
-            drawView.drawPoints(list);
-        } else {
-            drawView.drawPoint(viewWidth * 0.5f, viewHeight * 0.5f);
-        }
-
     }
 
     @Override
@@ -332,11 +346,12 @@ public class MainActivity extends GvrActivity
 
         float cursorSize = 0.005f;
         cursorCoords = new float[]{
-                0.0f - cursorSize, 0.0f - cursorSize, -0.5f,
-                0.0f + cursorSize, 0.0f - cursorSize, -0.5f,
-                0.0f + cursorSize, 0.0f + cursorSize, -0.5f,
-                0.0f - cursorSize, 0.0f + cursorSize, -0.5f
+                0.0f - cursorSize, 0.0f - cursorSize, CURSOR_Z,
+                0.0f + cursorSize, 0.0f - cursorSize, CURSOR_Z,
+                0.0f + cursorSize, 0.0f + cursorSize, CURSOR_Z,
+                0.0f - cursorSize, 0.0f + cursorSize, CURSOR_Z
         };
+
         ByteBuffer bbcv = ByteBuffer.allocateDirect(cursorCoords.length * 4);
         bbcv.order(ByteOrder.nativeOrder());
         cursorVertexCoordsBuf = bbcv.asFloatBuffer();
