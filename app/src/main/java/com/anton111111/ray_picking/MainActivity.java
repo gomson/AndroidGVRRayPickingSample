@@ -117,13 +117,7 @@ public class MainActivity extends GvrActivity
         modelViewMatrix = new float[16];
         Matrix.setIdentityM(modelViewMatrix, 0);
 
-        float theta = -eulerAngles[1];
-        float phi = -eulerAngles[0] + 1.57f;
-        float anglePitch = (float) Math.toDegrees(phi) - 90.0f;
-        float angleYaw = (float) Math.toDegrees(theta);
-
-        Matrix.rotateM(modelViewMatrix, 0, anglePitch, 1.0f, 0.0f, 0.0f);
-        Matrix.rotateM(modelViewMatrix, 0, angleYaw, 0.0f, 1.0f, 0.0f);
+        Matrix.multiplyMM(modelViewMatrix, 0, modelViewMatrix, 0, eye.getEyeView(), 0);
         Matrix.multiplyMM(modelViewMatrix, 0, modelViewMatrix, 0, viewMatrix, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspectiveMatrix, 0, modelViewMatrix, 0);
 
