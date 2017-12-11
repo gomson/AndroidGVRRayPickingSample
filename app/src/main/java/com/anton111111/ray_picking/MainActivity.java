@@ -205,7 +205,7 @@ public class MainActivity extends GvrActivity
                 CURSOR_Z,
                 1.0f
         };
-        Log.e("Yo", Arrays.toString(coords));
+
         float[] result = new float[16];
         Matrix.multiplyMV(result, 0, modelViewProjMatrix, 0, coords, 0);
         float xndc = result[0] / result[3];
