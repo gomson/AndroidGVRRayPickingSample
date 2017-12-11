@@ -4,6 +4,7 @@ import android.opengl.GLES20;
 import android.opengl.GLU;
 import android.opengl.Matrix;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import com.google.vr.sdk.base.Eye;
@@ -17,6 +18,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -194,11 +196,16 @@ public class MainActivity extends GvrActivity
             return;
         }
         float[] coords = new float[]{
-                cursorCoords[0] + (((cursorCoords[3] + 1.0f) - (cursorCoords[0] + 1.0f)) / 2.0f),
-                cursorCoords[1] + (((cursorCoords[4] + 1.0f) - (cursorCoords[1] + 1.0f)) / 2.0f),
+                new Double(
+                        new Double(cursorCoords[0]) + (new Double(cursorCoords[3]) + new Double(cursorCoords[0]) * -1.0d) / 2.0d
+                ).floatValue(),
+                new Double(
+                        new Double(cursorCoords[1]) + (new Double(cursorCoords[10]) + new Double(cursorCoords[1]) * -1.0d) / 2.0d
+                ).floatValue(),
                 CURSOR_Z,
                 1.0f
         };
+        Log.e("Yo", Arrays.toString(coords));
         float[] result = new float[16];
         Matrix.multiplyMV(result, 0, modelViewProjMatrix, 0, coords, 0);
         float xndc = result[0] / result[3];
